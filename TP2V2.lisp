@@ -1,4 +1,53 @@
+; Récupère les conditions préalables pour appliquer une règle
+(defun getPreconditionsForRule (rule)
+    (first rule)
+)
 
+; Récupère les actions à effectuer si la règle est appliquée
+(defun getActionsForRule (rule)
+    (second rule)
+)
+
+; BASE DE RÈGLES
+(setq *rules* '(
+        ; Si l'adversaire a un Chevalier et un Géant, alors prendre MiniPK, Mousquetaire ou HutteGobelin
+        ((Chevalier Geant) (MiniPK Mousquetaire HutteGobelin))
+        ; Si l'adversaire a un Chevalier, alors prendre Gobelin ou Mousquetaire
+        ((Chevalier) (Gobelin Mousquetaire))
+        ; Si l'adversaire a un Géant, alors prendre MiniPK
+        ((Geant) (MiniPK))
+        ; Si l'adversaire a une Gargouille, alors prendre Archère ou GobelinFleche
+        ((Gargouille) (Archere GobelinFleche))
+        ; Si l'adversaire a une Archère et un Chevalier, prendre MiniPK avec Fleches ou Mousquetaire avec Fleche
+        ((Archere Chevalier) (MiniPK Fleches Mousquetaire Fleche))
+))
+
+; Exécute le chaînage avant pour déterminer les actions à prendre
+(defun forwardChain ()
+    (let ((actions '()))
+        (dolist (rule *rules*)
+            (let ((preconditions (getPreconditionsForRule rule))
+                  (ruleActions (getActionsForRule rule)))
+                ; Vérifie si toutes les préconditions sont satisfaites
+                (when (subsetp preconditions *current-state* :test 'equal)
+                    ; Ajoute les actions de la règle aux actions à prendre
+                    (setf actions (union actions ruleActions :test 'equal))
+                )
+            )
+        )
+        ; Retourne l'ensemble des actions déduites
+        actions
+    )
+)
+
+; ÉTAT ACTUEL
+(setq *current-state* '(Chevalier Gargouille))
+
+; Mise à jour de l'état actuel et exécution du chaînage avant
+(setf *current-state* '(Chevalier Geant)) ; Mettre à jour selon l'observation
+(forwardChain) ; -> Retournera (MiniPK Mousquetaire HutteGobelin) selon les règles définies
+
+#|
 ;FONCTIONS DE SERVICE
 (defun getCriteresPourAppliquerRegle (regle)
     (second regle)
@@ -16,6 +65,7 @@
 ;Idéal pour gagner des championnats.
 ;Il suffit de voir contre qui on joue, voir quel est le deck qu'il utilise en général et déterminer le meilleur deck pour le contrer
 ;C'est donc un chainage arrière
+;Source : https://www.deckshop.pro/
 
 ;Il y a énormément de cartes, nous allons donc nous limiter au cartes de l'arène 1 : 
 ; Archere, Fleches, Chevalier, Gargouille, BouleFeu, MiniPK, Mousquetaire, Geant, Gobelin, GobelinFleche, HutteGobelin
@@ -38,18 +88,27 @@
 ;Dans ce que je dois prendre, si il y a plusieurs trucs qu'on peut prendre ca fait ((Card1) OU (Card2) OU (Card3 AND Card4))
 ;Le premier choix (ici Card1) est pris sauf si une règle l'empeche auquel cas on prendra la suite (Card2) et ainsi de suite
 
+;CHOIX DES REGLES
+;Selon le site web, lorsqu'il y a un Chevalier et un Geant en face, il faut prendre au moins une carte qui fait beaucoup de dégats pour éviter qu'ils atteigne la tour puisqu'ils sont beaucoup de vie
+;	(et donc un MiniPK, un Mousquetaire ou une HutteGobelin). Peut importe le coût en élixir car l'adversaire en a dépensé beaucoup aussi pour poser ces deux cartes
+;Selon le site web, lorsqu'il y a un Chevalier en face, il faut prendre une carte qui fait beaucoup de dégats pour éviter qu'il atteigne la tour (Idéalement un Gobelin ou un Mousquetaire car ils coutent moiuns cher que le MiniPK)
+;Selon le site web, lorsqu'il y a un Chevalier en face, il faut prendre une carte qui fait beaucoup de dégats pour éviter qu'il atteigne la tour (Idéalement un Gobelin ou un Mousquetaire car ils coutent moiuns cher que le MiniPK)
+;Selon le site web, lorsqu'il y a une Gargouille en face, il faut prendre une carte qui fait des dégats aériens pour se débarasser des Gargouilles (Idéalement une Archère ou un GobelinFleche car ils ne sont pas chers et que nous n'avons pas
+;	besoin de beaucoup de dégats pour tuer une Gargouille). Nous aurions pu prendre Fleches mais contrairement aux cartes citées précédemment, Fleches n'attaquera pas la tour après avoir tué la Gargouille
+;Selon le site web, lorsqu'il y a une Archère et un Chevalier en face, il faut d'abord se débarasser de l'archère avant de se débarasser du Chevalier (Pour cela 
+;	et qu'ils ne coutent pas beaucoup plus cher)
 (setq *regles* '(
         (R1 ((Chevalier) (Geant))()((MiniPK) (Mousquetaire) (HutteGobelin)))
-        (R2 ((Chevalier))()((Mousquetaire)))
+        (R2 ((Chevalier))()((Gobelin)(Mousquetaire)))
         (R3 ((Geant))()((MiniPK)))
-        (R4 ((Gargouille))()((Archere) (Mousquetaire)))
+        (R4 ((Gargouille))()((Archere) (GobelinFleche)))
         (R5 ((Archere)(Chevalier))()((MiniPK Fleches)(Mousquetaire Fleche)))
     )
 )
 
 (defun creerDeck()
     (dolist (r *regles*)
-        (write (getCeQueJeDoitAvoirPourAppliquerLaRegle r))
+        (write (getActionsSuiteARegle r))
     )
 )
 

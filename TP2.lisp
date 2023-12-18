@@ -17,13 +17,23 @@
         (KingdomHearth '(RPG 100 150 '(Windows PS XBOX Switch)))
     )
 )
+;ENTREE
+;L'utilisateur se voit montré 10 jeux au hasard et pour chaque jeu il dit si il l'aime ou pas
+;L'utilisateur dit quels plateformes il possède
+;L'utilisateur dit combien de temps il veut jouer (temps min et max)
 
+;REGLES
+
+;SORTIE
+;L'utilisateur se voit proposé des jeux qui correspondent à ses critères et de la même catégorie que ceux qu'il a aimé
 
 ;Etablissement des règles
 (setq R1 '())
-
-; Base de faits (ajoutez des faits ici)
-(setq bdf '(JeuPlateformeSwitch JeuFPSCourteDuree JeuRPGLongueDuree JeuRPGSwitch JeuFPSMultijoueur))
 (setq *bdr* '(R1 R2 R3 R4 R5))
+
 ;Etablissement des faits
 (setq *bdf* )
+
+
+
+;------------------------------------------------------------------;
